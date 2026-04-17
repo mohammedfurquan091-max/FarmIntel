@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fresh agri-tech design system. All colors HSL. */
+
+@layer base {
+  :root {
+    --background: 60 33% 98%;
+    --foreground: 155 35% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 155 35% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 155 35% 12%;
+
+    /* Deep forest green */
+    --primary: 155 55% 22%;
+    --primary-foreground: 60 33% 98%;
+    --primary-glow: 152 45% 38%;
+
+    /* Warm amber accent */
+    --accent: 38 92% 55%;
+    --accent-foreground: 155 45% 14%;
+
+    --secondary: 152 25% 92%;
+    --secondary-foreground: 155 45% 18%;
+
+    --muted: 60 20% 94%;
+    --muted-foreground: 155 12% 38%;
+
+    --success: 142 60% 38%;
+    --success-foreground: 60 33% 98%;
+
+    --warning: 32 95% 50%;
+    --warning-foreground: 155 45% 14%;
+
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 60 33% 98%;
+
+    --border: 152 20% 88%;
+    --input: 152 20% 88%;
+    --ring: 155 55% 22%;
+
+    --radius: 0.85rem;
+
+    /* Brand gradients & shadows */
+    --gradient-hero: linear-gradient(135deg, hsl(155 55% 18%) 0%, hsl(152 50% 28%) 55%, hsl(38 80% 48%) 130%);
+    --gradient-card: linear-gradient(150deg, hsl(60 33% 99%) 0%, hsl(152 25% 96%) 100%);
+    --gradient-amber: linear-gradient(135deg, hsl(38 95% 60%) 0%, hsl(28 90% 52%) 100%);
+    --gradient-leaf: linear-gradient(135deg, hsl(152 50% 30%) 0%, hsl(142 55% 40%) 100%);
+
+    --shadow-soft: 0 4px 20px -8px hsl(155 45% 20% / 0.18);
+    --shadow-elegant: 0 20px 50px -20px hsl(155 55% 18% / 0.35);
+    --shadow-amber: 0 14px 40px -12px hsl(38 92% 50% / 0.45);
+
+    --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 60 33% 98%;
+    --sidebar-foreground: 155 35% 18%;
+    --sidebar-primary: 155 55% 22%;
+    --sidebar-primary-foreground: 60 33% 98%;
+    --sidebar-accent: 152 25% 92%;
+    --sidebar-accent-foreground: 155 45% 18%;
+    --sidebar-border: 152 20% 88%;
+    --sidebar-ring: 155 55% 22%;
+  }
+
+  .dark {
+    --background: 155 35% 8%;
+    --foreground: 60 25% 95%;
+    --card: 155 32% 11%;
+    --card-foreground: 60 25% 95%;
+    --popover: 155 32% 11%;
+    --popover-foreground: 60 25% 95%;
+    --primary: 142 55% 55%;
+    --primary-foreground: 155 45% 10%;
+    --primary-glow: 142 60% 65%;
+    --accent: 38 92% 60%;
+    --accent-foreground: 155 45% 10%;
+    --secondary: 155 25% 18%;
+    --secondary-foreground: 60 25% 95%;
+    --muted: 155 22% 16%;
+    --muted-foreground: 152 12% 65%;
+    --success: 142 55% 50%;
+    --success-foreground: 155 45% 10%;
+    --warning: 38 95% 60%;
+    --warning-foreground: 155 45% 10%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 60 25% 95%;
+    --border: 155 22% 20%;
+    --input: 155 22% 20%;
+    --ring: 142 55% 55%;
+    --sidebar-background: 155 35% 8%;
+    --sidebar-foreground: 60 25% 95%;
+    --sidebar-primary: 142 55% 55%;
+    --sidebar-primary-foreground: 155 45% 10%;
+    --sidebar-accent: 155 25% 18%;
+    --sidebar-accent-foreground: 60 25% 95%;
+    --sidebar-border: 155 22% 20%;
+    --sidebar-ring: 142 55% 55%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  body { @apply bg-background text-foreground antialiased; font-feature-settings: "ss01", "cv11"; }
+  h1, h2, h3, .font-display { font-family: 'Fraunces', Georgia, serif; letter-spacing: -0.02em; }
+}
+
+@layer utilities {
+  .bg-hero { background: var(--gradient-hero); }
+  .bg-card-soft { background: var(--gradient-card); }
+  .bg-amber { background: var(--gradient-amber); }
+  .bg-leaf { background: var(--gradient-leaf); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-elegant { box-shadow: var(--shadow-elegant); }
+  .shadow-amber-glow { box-shadow: var(--shadow-amber); }
+  .transition-smooth { transition: all 0.3s var(--transition-smooth); }
+  .text-balance { text-wrap: balance; }
+}

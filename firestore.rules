@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // User profiles - only owners can edit
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      
+      // Subcollectons like chatSessions
+      match /chatSessions/{sessionId} {
+        allow read, write: if isAuthenticated() && isOwner(userId);
+      }
+    }
+
+    // Farm Journal - owner only
+    match /farmJournal/{entryId} {
+      allow read, write: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Price Alerts - owner only
+    match /priceAlerts/{alertId} {
+      allow read, write: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Price History - public readable
+    match /priceHistory/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions or Admin
+    }
+
+    // Equipment Rental Marketplace
+    match /equipmentListings/{listingId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+    }
+
+    match /rentalRequests/{requestId} {
+      allow read: if isAuthenticated() && (resource.data.renterId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.renterId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+    }
+
+    // Forum - read all, write own
+    match /forumPosts/{postId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      match /forumAnswers/{answerId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      }
+    }
+
+    // Soil Health
+    match /soilTests/{testId} {
+      allow read, write: if isAuthenticated() && (resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid);
+    }
+  }
+}
