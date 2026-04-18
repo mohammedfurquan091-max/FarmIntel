@@ -67,8 +67,19 @@ export default function Dashboard() {
   const { data: monitoring = [] } = useQuery({
     queryKey: ["crop-monitoring"],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/crop-monitoring`);
-      return res.json();
+      try {
+        const res = await fetch(`${API_URL}/crop-monitoring`);
+        if (!res.ok) throw new Error("API failed");
+        return await res.json();
+      } catch (err) {
+        console.warn("API unavailable, using fallback monitoring data.");
+        return [
+          { id: "c1", type: "wheat", stage: "Grain Filling", daysToHarvest: 35, diseaseRisk: "medium", health: "Fair", dates: { sowed: "2023-11-01", harvest: "2024-04-15" }, conditions: { temperature: 24, humidity: 55, moisture: 45 } },
+          { id: "c2", type: "tomato", stage: "Fruiting", daysToHarvest: 15, diseaseRisk: "high", health: "Good", dates: { sowed: "2024-01-10", harvest: "2024-03-25" }, conditions: { temperature: 28, humidity: 65, moisture: 70 } },
+          { id: "c3", type: "onion", stage: "Bulbing", daysToHarvest: 40, diseaseRisk: "low", health: "Excellent", dates: { sowed: "2023-12-15", harvest: "2024-05-10" }, conditions: { temperature: 30, humidity: 40, moisture: 50 } },
+          { id: "c4", type: "rice", stage: "Tillering", daysToHarvest: 80, diseaseRisk: "low", health: "Good", dates: { sowed: "2024-02-01", harvest: "2024-06-20" }, conditions: { temperature: 32, humidity: 75, moisture: 85 } }
+        ];
+      }
     }
   });
 

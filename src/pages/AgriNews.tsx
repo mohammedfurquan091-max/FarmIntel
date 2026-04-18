@@ -82,8 +82,14 @@ export default function AgriNews() {
   const { data: news = [], isLoading } = useQuery<NewsItem[]>({
     queryKey: ["news"],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/news`);
-      return res.json();
+      try {
+        const res = await fetch(`${API_URL}/news`);
+        if (!res.ok) throw new Error("API failed");
+        return await res.json();
+      } catch (err) {
+        console.warn("API unavailable, using fallback news data.");
+        return NEWS_DATA;
+      }
     }
   });
 

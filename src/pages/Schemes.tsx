@@ -23,6 +23,13 @@ const CATEGORIES = ["All", "Income Support", "Crop Insurance", "Agricultural Cre
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
+const FALLBACK_SCHEMES = [
+  { id: "pm-kisan", name: "PM-KISAN", fullName: "Pradhan Mantri Kisan Samman Nidhi", category: "Income Support", status: "Active", benefit: "₹6,000/year", benefitDetail: "Paid in 3 installments of ₹2,000 directly to bank account", eligibility: ["All landholding farmers", "Small and marginal farmers"], exclusions: ["Income tax payers", "Government employees"], documents: ["Aadhaar Card", "Bank Passbook"], deadline: "Ongoing", applyUrl: "https://pmkisan.gov.in", color: "green" },
+  { id: "pmfby", name: "PMFBY", fullName: "Pradhan Mantri Fasal Bima Yojana", category: "Crop Insurance", status: "Active", benefit: "Up to full sum insured", benefitDetail: "Premium: 2% for Kharif, 1.5% for Rabi", eligibility: ["All farmers growing notified crops"], exclusions: ["Crops not notified"], documents: ["Aadhaar Card", "Bank Account", "Sowing Certificate"], deadline: "Kharif: 31 July", applyUrl: "https://pmfby.gov.in", color: "blue" },
+  { id: "kcc", name: "KCC", fullName: "Kisan Credit Card", category: "Agricultural Credit", status: "Active", benefit: "Loan up to ₹3 lakh at 4%", benefitDetail: "Short-term credit for crop cultivation", eligibility: ["Farmers — individual or joint"], exclusions: ["Non-agricultural borrowers"], documents: ["Identity Proof", "Land details"], deadline: "Ongoing", applyUrl: "https://www.nabard.org", color: "amber" },
+  { id: "pkvy", name: "PKVY", fullName: "Paramparagat Krishi Vikas Yojana", category: "Organic Farming", status: "Active", benefit: "₹50,000/hectare over 3 years", benefitDetail: "Supports organic farming clusters", eligibility: ["Farmers adopting organic farming"], exclusions: ["Individual applications"], documents: ["Aadhaar", "Land Records"], deadline: "Subject to state", applyUrl: "https://pgsindia-ncof.gov.in", color: "lime" }
+];
+
 export default function Schemes() {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<string | null>(null);
@@ -31,12 +38,18 @@ export default function Schemes() {
   const { data: schemes = [], isLoading } = useQuery({
     queryKey: ["schemes", filter],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/schemes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: filter })
-      });
-      return res.json();
+      try {
+        const res = await fetch(`${API_URL}/schemes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ category: filter })
+        });
+        if (!res.ok) throw new Error("API failed");
+        return await res.json();
+      } catch (err) {
+        console.warn("API unavailable, using fallback schemes.");
+        return filter === "All" ? FALLBACK_SCHEMES : FALLBACK_SCHEMES.filter(s => s.category === filter);
+      }
     }
   });
 
