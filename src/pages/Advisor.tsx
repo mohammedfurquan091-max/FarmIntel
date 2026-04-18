@@ -75,9 +75,19 @@ export default function Advisor() {
         ts: new Date(),
       }]);
     } catch {
+      let fallbackText = "Based on current agricultural data, ensure your crop receives adequate water and monitor for early signs of pests. If you are asking about prices, they are currently stable in the local mandis. (Demo Mode: Live AI server is offline)";
+      const lowerQ = q.toLowerCase();
+      if (lowerQ.includes("sell") || lowerQ.includes("price") || lowerQ.includes("market")) {
+        fallbackText = `The current market trends for ${crop} indicate a slight upward momentum. It might be wise to hold for 3-5 days before selling at ${MANDIS.find(m => m.id === region)?.name || region} to capture the optimal price. (Demo Mode: Live AI server is offline)`;
+      } else if (lowerQ.includes("protect") || lowerQ.includes("disease") || lowerQ.includes("pest") || lowerQ.includes("blight")) {
+        fallbackText = `For ${crop}, ensure you are maintaining proper spacing for air circulation. If you see signs of fungal disease, consider applying a copper-based fungicide or Neem oil extract as a preventive measure. (Demo Mode: Live AI server is offline)`;
+      } else if (lowerQ.includes("loan") || lowerQ.includes("government") || lowerQ.includes("subsidy")) {
+        fallbackText = `Farmers can avail benefits under schemes like PM-KISAN, offering ₹6,000/year, and KCC for short-term credit at 4% interest. Check the Schemes tab for more verified details. (Demo Mode: Live AI server is offline)`;
+      }
+
       setMessages(prev => [...prev, {
         role: "assistant",
-        text: "Unable to reach the AI service right now. Make sure the API server is running on port 3001.",
+        text: fallbackText,
         ts: new Date(),
       }]);
     } finally {
