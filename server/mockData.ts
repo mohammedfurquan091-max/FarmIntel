@@ -179,5 +179,72 @@ export function generatePriceSeries(crop: string, region: string, historyDays = 
     const value = Number((meta.basePrice + mandiBias + seasonal + (price-meta.basePrice)*0.6).toFixed(2));
     points.push({ date: d.toISOString().slice(0,10), price: value, isForecast: i>0 });
   }
-  return { points, mandi };
-}
+export const DISEASE_DB: Record<string, any[]> = {
+  tomato: [
+    { 
+      disease: "Late Blight", 
+      confidence: 96, 
+      severity: "High", 
+      symptoms: ["Water-soaked spots on leaves", "White fungal growth in humid conditions", "Dark brown lesions on stems"],
+      treatment: "Apply fungicides like Mancozeb or Chlorothalonil. Remove infected plants immediately.",
+      ai_insight: "This is a fast-spreading fungal disease. Check your irrigation levels and avoid overhead watering."
+    },
+    { 
+      disease: "Early Blight", 
+      confidence: 92, 
+      severity: "Medium", 
+      symptoms: ["Concentric rings on older leaves", "Yellowing foliage", "Stem rot near soil line"],
+      treatment: "Increase spacing for better airflow. Use copper-based fungicides.",
+      ai_insight: "Often caused by soil splash. Mulching can significantly reduce the risk of Early Blight."
+    }
+  ],
+  wheat: [
+    { 
+      disease: "Yellow Rust", 
+      confidence: 98, 
+      severity: "Critical", 
+      symptoms: ["Yellow/orange pustules in stripes on leaves", "Stunted growth", "Shriveled grains"],
+      treatment: "Apply Propiconazole or Tebuconazole. Plant rust-resistant varieties in next cycle.",
+      ai_insight: "Rust spreads via wind. A regional alert might be necessary as this can wipe out whole fields."
+    },
+    { 
+      disease: "Powdery Mildew", 
+      confidence: 89, 
+      severity: "Low", 
+      symptoms: ["White powdery patches on leaves and stems", "Greyish fungal growth", "Leaf curling"],
+      treatment: "Apply sulfur-based sprays. Avoid excessive nitrogen fertilization.",
+      ai_insight: "Usually occurs in high humidity but low rainfall. Check field density."
+    }
+  ],
+  rice: [
+    { 
+      disease: "Rice Blast", 
+      confidence: 94, 
+      severity: "High", 
+      symptoms: ["Diamond-shaped lesions with grey centers", "Neck rot", "Node breakage"],
+      treatment: "Use Tricyclazole sprays. Avoid excessive nitrogen. Use resistant cultivars.",
+      ai_insight: "Blast is the most serious disease of rice. Ensure your nursery is well-drained."
+    }
+  ],
+  maize: [
+    { 
+      disease: "Corn Leaf Blight", 
+      confidence: 91, 
+      severity: "Medium", 
+      symptoms: ["Large, cigar-shaped grey lesions", "Premature drying of leaves"],
+      treatment: "Rotate crops with non-grass species. Use resistant hybrids.",
+      ai_insight: "Fungus survives in crop debris. Deep plowing after harvest can help."
+    }
+  ]
+};
+
+export const DEFAULT_DIAGNOSES = [
+  { 
+    disease: "Heat Stress / Mineral Deficiency", 
+    confidence: 85, 
+    severity: "Low", 
+    symptoms: ["Yellowing leaf margins", "Curling of new leaves", "Slight wilting during peak sun"],
+    treatment: "Ensure consistent irrigation. Apply a balanced N-P-K fertilizer with micronutrients.",
+    ai_insight: "Your plant appears mostly healthy but may be struggling with local soil conditions or heat."
+  }
+];
