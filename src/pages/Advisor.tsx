@@ -75,14 +75,48 @@ export default function Advisor() {
         ts: new Date(),
       }]);
     } catch {
-      let fallbackText = "Based on current agricultural data, ensure your crop receives adequate water and monitor for early signs of pests. If you are asking about prices, they are currently stable in the local mandis. (Demo Mode: Live AI server is offline)";
+      let fallbackText = "Based on current agricultural patterns, your crop needs steady monitoring. (Demo Mode: Live AI server offline)\n\nDiagnosis: General growth check required.\nAction Steps:\n• Ensure irrigation is done early morning.\n• Look for any leaf curling.\n\nExpert Tip: Overgrowth can sometimes attract pests; ensure your field density is balanced.";
       const lowerQ = q.toLowerCase();
+      
       if (lowerQ.includes("sell") || lowerQ.includes("price") || lowerQ.includes("market")) {
-        fallbackText = `The current market trends for ${crop} indicate a slight upward momentum. It might be wise to hold for 3-5 days before selling at ${MANDIS.find(m => m.id === region)?.name || region} to capture the optimal price. (Demo Mode: Live AI server is offline)`;
+        fallbackText = `The current market trends for ${crop} in ${MANDIS.find(m => m.id === region)?.name || region} indicate a slight upward momentum. (Demo Mode: Live AI server offline)
+
+Diagnosis: Strong local demand but buffer stocks are decreasing.
+Action Steps:
+• Hold your current harvest for another 3-5 days.
+• Check if there is any moisture in the grain before selling.
+
+Expert Tip: Prices usually peak during the mid-morning trade hours at your local mandi.
+
+Questions for you:
+1. What is the current moisture level of your harvest?
+2. Are you selling to a private buyer or the government MSP?`;
       } else if (lowerQ.includes("protect") || lowerQ.includes("disease") || lowerQ.includes("pest") || lowerQ.includes("blight")) {
-        fallbackText = `For ${crop}, ensure you are maintaining proper spacing for air circulation. If you see signs of fungal disease, consider applying a copper-based fungicide or Neem oil extract as a preventive measure. (Demo Mode: Live AI server is offline)`;
+        fallbackText = `For your ${crop} crop, protection should be the immediate priority based on seasonal humidity. (Demo Mode: Live AI server offline)
+
+Diagnosis: Early signs of environmental stress or potential fungal infection.
+Action Steps:
+• If you see dark spots, apply a 1% Bordeaux mixture.
+• Use 5ml of Neem oil per liter of water as an organic spray.
+
+Expert Tip: Ensure your field has proper drainage to avoid root rot.
+
+Questions for you:
+1. What is the color of the spots on the leaves?
+2. Have you applied any fertilizer in the last 14 days?`;
       } else if (lowerQ.includes("loan") || lowerQ.includes("government") || lowerQ.includes("subsidy")) {
-        fallbackText = `Farmers can avail benefits under schemes like PM-KISAN, offering ₹6,000/year, and KCC for short-term credit at 4% interest. Check the Schemes tab for more verified details. (Demo Mode: Live AI server is offline)`;
+        fallbackText = `Several agricultural support schemes are currently active for farmers in your region. (Demo Mode: Live AI server offline)
+
+Diagnosis: Availability of Credit and Income Support.
+Action Steps:
+• Check your PM-KISAN status for the ₹2,000 installment.
+• Apply for a KCC loan at your local bank for low-interest credit.
+
+Questions for you:
+1. Do you have a valid Aadhaar linked to your bank account?
+2. Is your landholding less than 2 hectares?`;
+      } else {
+        fallbackText += "\n\nQuestions for you:\n1. What is your soil pH or soil type?\n2. What was the last irrigation source you used?";
       }
 
       setMessages(prev => [...prev, {

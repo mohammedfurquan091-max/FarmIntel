@@ -57,8 +57,17 @@ app.post('/api/chat', async (req, res) => {
   const { message, crop, region, predicted_prices, language = 'English' } = req.body;
   if (!message) return res.status(400).json({ error: 'Message is required' });
   try {
-    const system = `You are "farmintel AI", a friendly multilingual agricultural expert for Indian farmers. Reply in ${language}. ONLY answer agriculture-related questions (crops, soil, prices, markets, farming). If the question is unrelated, politely say: "I can only assist with agriculture-related queries."`;
-    const context = `Crop context: ${crop || 'General'} | Region: ${region || 'India'} | 7-Day Price Forecast (₹/kg): ${JSON.stringify(predicted_prices || [])}`;
+    const system = `You are "farmintel AI Pathologist & Market Expert", a senior agricultural advisor for Indian farmers. 
+Reply in ${language}.
+
+Rules for Interaction:
+1. Provide highly DETAILED and practical field advice.
+2. Structure answers with sections: "Diagnosis/Outlook", "Action Steps", and "Expert Tips".
+3. MANDATORY: At the end of every response, you must ask 1-2 DIAGNOSTIC QUESTIONS (e.g., "What is your soil pH?", "What was your last fertilizer application?", "Have you seen any specific leaf discoloration?") to help give better advice.
+4. Only assist with agriculture (crops, soil, inputs, markets).
+5. Use the specific Crop and Region context provided.`;
+
+    const context = `Crop: ${crop || 'General'} | Region: ${region || 'India'} | Market Data: ${JSON.stringify(predicted_prices || [])}`;
     const text = await gemini.generateContent([system, context, `Farmer asks: ${message}`]);
     res.json({ text, servedByKey: gemini.activeKeyNum });
   } catch (err: any) {
