@@ -59,7 +59,7 @@ class GeminiRotator {
     console.info("[GeminiRotator] Reset to key 1");
   }
 
-  private getModel(modelName = "gemini-flash-latest"): GenerativeModel {
+  private getModel(modelName = "gemini-1.5-flash-latest"): GenerativeModel {
     const ai = new GoogleGenerativeAI(API_KEYS[this.currentIndex]);
     return ai.getGenerativeModel({ model: modelName });
   }
@@ -67,9 +67,9 @@ class GeminiRotator {
   /**
    * Generate content with automatic key rotation on quota errors.
    * @param parts  Array of prompt strings / objects (string | Part)
-   * @param model  Gemini model name (default: "gemini-1.5-flash")
+   * @param model  Gemini model name (default: "gemini-1.5-flash-latest")
    */
-  async generateContent(parts: any[], model = "gemini-1.5-flash"): Promise<string> {
+  async generateContent(parts: any[], model = "gemini-1.5-flash-latest"): Promise<string> {
     let lastError: unknown;
 
     // Try every available key, starting from current
