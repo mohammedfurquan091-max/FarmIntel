@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { Newspaper, Bell, TrendingUp, Search, ExternalLink, BrainCircuit, Loader2, Filter, Share2, Bookmark, Clock, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,15 +74,23 @@ const CAT_COLORS = {
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 export default function AgriNews() {
-  const [news, setNews] = useState<NewsItem[]>(NEWS_DATA);
+  const { t } = useTranslation();
   const [summaries, setSummaries] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [loadingAI, setLoadingAI] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<string>("all");
 
+  const { data: news = [], isLoading } = useQuery<NewsItem[]>({
+    queryKey: ["news"],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/news`);
+      return res.json();
+    }
+  });
+
   const getSummary = async (item: NewsItem) => {
-    if (summaries[item.id] || loading[item.id]) return;
+    if (summaries[item.id] || loadingAI[item.id]) return;
     
-    setLoading(prev => ({ ...prev, [item.id]: true }));
+    setLoadingAI(prev => ({ ...prev, [item.id]: true }));
     try {
       const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
@@ -95,7 +105,7 @@ export default function AgriNews() {
     } catch {
       setSummaries(prev => ({ ...prev, [item.id]: "Error generating AI summary." }));
     } finally {
-      setLoading(prev => ({ ...prev, [item.id]: false }));
+      setLoadingAI(prev => ({ ...prev, [item.id]: false }));
     }
   };
 
@@ -133,14 +143,21 @@ export default function AgriNews() {
       </div>
 
       <div className="grid gap-6">
-        {filteredNews.map((item, idx) => (
+        {isLoading ? (
+          [1, 2, 3].map(i => <div key={i} className="h-64 rounded-3xl bg-white/5 animate-pulse" />)
+        ) : filteredNews.length === 0 ? (
+          <Card className="p-12 border-dashed border-white/10 bg-white/5 flex flex-col items-center justify-center text-center rounded-3xl">
+            <Newspaper className="h-12 w-12 text-white/10 mb-4" />
+            <p className="text-white/30 font-bold">No news articles found for this category.</p>
+          </Card>
+        ) : filteredNews.map((item, idx) => (
           <Card key={item.id} className="group overflow-hidden border-white/[0.08] bg-white/[0.03] rounded-3xl backdrop-blur-3xl hover:bg-white/[0.05] transition-all duration-300">
             <div className="flex flex-col md:flex-row">
               {/* Image */}
               <div className="relative h-48 md:h-auto md:w-72 shrink-0 overflow-hidden">
                 <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <Badge className={cn("absolute top-4 left-4 border rounded-lg px-2.5 py-1 text-[10px] font-black uppercase", CAT_COLORS[item.category])}>
+                <Badge className={cn("absolute top-4 left-4 border rounded-lg px-2.5 py-1 text-[10px] font-black uppercase", CAT_COLORS[item.category as keyof typeof CAT_COLORS])}>
                   {item.category}
                 </Badge>
               </div>
@@ -175,9 +192,9 @@ export default function AgriNews() {
                     </p>
                   </div>
                 ) : (
-                  <Button variant="ghost" onClick={() => getSummary(item)} disabled={loading[item.id]}
+                  <Button variant="ghost" onClick={() => getSummary(item)} disabled={loadingAI[item.id]}
                     className="w-fit h-auto p-0 text-primary text-xs font-black gap-2 hover:bg-transparent">
-                    {loading[item.id] ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing Insights...</> : <><BrainCircuit className="h-3.5 w-3.5" /> Get AI Recommendation</>}
+                    {loadingAI[item.id] ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing Insights...</> : <><BrainCircuit className="h-3.5 w-3.5" /> Get AI Recommendation</>}
                   </Button>
                 )}
 

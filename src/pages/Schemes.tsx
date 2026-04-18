@@ -1,139 +1,12 @@
+import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { BookOpen, ExternalLink, CheckCircle2, AlertCircle, IndianRupee, Calendar, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-const SCHEMES = [
-  {
-    id: "pm-kisan",
-    name: "PM-KISAN",
-    fullName: "Pradhan Mantri Kisan Samman Nidhi",
-    category: "Income Support",
-    status: "Active",
-    benefit: "₹6,000/year",
-    benefitDetail: "Paid in 3 installments of ₹2,000 directly to bank account",
-    eligibility: ["All landholding farmers", "Small and marginal farmers", "Indian citizen with valid Aadhaar"],
-    exclusions: ["Income tax payers", "Former/current ministers, MPs, MLAs", "Government employees"],
-    documents: ["Aadhaar Card", "Land Records (Khatauni)", "Bank Passbook", "Mobile Number linked to Aadhaar"],
-    deadline: "Ongoing – Register anytime",
-    applyUrl: "https://pmkisan.gov.in",
-    color: "green",
-    ministry: "Ministry of Agriculture & Farmers' Welfare"
-  },
-  {
-    id: "pmfby",
-    name: "PMFBY",
-    fullName: "Pradhan Mantri Fasal Bima Yojana",
-    category: "Crop Insurance",
-    status: "Active",
-    benefit: "Up to full sum insured",
-    benefitDetail: "Premium: 2% for Kharif, 1.5% for Rabi, 5% for horticulture crops",
-    eligibility: ["All farmers growing notified crops", "Loanee and non-loanee farmers", "Tenant and sharecroppers"],
-    exclusions: ["Crops not notified under the scheme in that district"],
-    documents: ["Aadhaar Card", "Land Record / Patta", "Bank Account Details", "Sowing Certificate", "Crop Declaration Form"],
-    deadline: "Kharif: 31 July | Rabi: 31 December",
-    applyUrl: "https://pmfby.gov.in",
-    color: "blue",
-    ministry: "Ministry of Agriculture & Farmers' Welfare"
-  },
-  {
-    id: "kcc",
-    name: "KCC",
-    fullName: "Kisan Credit Card",
-    category: "Agricultural Credit",
-    status: "Active",
-    benefit: "Loan up to ₹3 lakh at 4% interest",
-    benefitDetail: "Short-term credit for crop cultivation, post-harvest expenses and allied activities",
-    eligibility: ["Farmers — individual or joint borrowers", "Owner-cultivators", "Tenant farmers, oral lessees"],
-    exclusions: ["Non-agricultural borrowers"],
-    documents: ["Identity Proof (Aadhaar/PAN)", "Address Proof", "Land details / lease agreement", "Passport size photo"],
-    deadline: "Ongoing – Apply at any bank branch",
-    applyUrl: "https://www.nabard.org/content.aspx?id=572",
-    color: "amber",
-    ministry: "Ministry of Finance / NABARD"
-  },
-  {
-    id: "pkvy",
-    name: "PKVY",
-    fullName: "Paramparagat Krishi Vikas Yojana",
-    category: "Organic Farming",
-    status: "Active",
-    benefit: "₹50,000/hectare over 3 years",
-    benefitDetail: "Supports organic farming clusters, certification and marketing of organic produce",
-    eligibility: ["Farmers willing to adopt organic farming", "Groups of minimum 20 farmers", "Land under cluster must be contiguous"],
-    exclusions: ["Individual applications (must form a cluster)"],
-    documents: ["Aadhaar Card", "Land Records", "Bank Details", "Group formation certificate"],
-    deadline: "Subject to state announcement",
-    applyUrl: "https://pgsindia-ncof.gov.in",
-    color: "lime",
-    ministry: "Ministry of Agriculture & Farmers' Welfare"
-  },
-  {
-    id: "pm-kisan-maandhan",
-    name: "PM-KMY",
-    fullName: "Pradhan Mantri Kisan Maandhan Yojana",
-    category: "Pension Scheme",
-    status: "Active",
-    benefit: "₹3,000/month pension after age 60",
-    benefitDetail: "Voluntary & contributory pension with matching contribution by Government of India",
-    eligibility: ["Small and marginal farmers", "Age 18–40 years", "Land holding up to 2 hectares"],
-    exclusions: ["NPS, ESIC, EPFO members", "Existing PM-SYM members", "Income tax payers"],
-    documents: ["Aadhaar Card", "Bank Account (linked to Aadhaar)", "Land Record"],
-    deadline: "Enroll at nearest CSC / PM-KISAN portal",
-    applyUrl: "https://maandhan.in",
-    color: "purple",
-    ministry: "Ministry of Agriculture & Farmers' Welfare"
-  },
-  {
-    id: "enam",
-    name: "e-NAM",
-    fullName: "Electronic National Agriculture Market",
-    category: "Market Access",
-    status: "Active",
-    benefit: "Online pan-India market access",
-    benefitDetail: "Sell produce directly to buyers across India via transparent online bidding",
-    eligibility: ["All farmers registered at APMC mandis"],
-    exclusions: ["Mandis not integrated with e-NAM platform"],
-    documents: ["Aadhaar Card", "Bank Account", "Registration at local APMC mandi"],
-    deadline: "Ongoing – Register at nearest mandi",
-    applyUrl: "https://enam.gov.in",
-    color: "teal",
-    ministry: "Ministry of Agriculture & Farmers' Welfare"
-  },
-  {
-    id: "aif",
-    name: "AIF",
-    fullName: "Agriculture Infrastructure Fund",
-    category: "Infrastructure Loan",
-    status: "Active",
-    benefit: "Loans up to ₹2 Crore at 3% interest subsidy",
-    benefitDetail: "For post-harvest management infrastructure, cold storage, primary processing",
-    eligibility: ["FPOs, FPCs", "Agri-entrepreneurs", "SHGs, Primary Agricultural Credit Societies"],
-    exclusions: ["Retail trading not eligible"],
-    documents: ["Business Plan", "Registration Certificate", "Financial Statements", "Bank Details"],
-    deadline: "Ongoing",
-    applyUrl: "https://agriinfra.dac.gov.in",
-    color: "orange",
-    ministry: "Ministry of Agriculture & Farmers' Welfare"
-  },
-  {
-    id: "rkvy",
-    name: "RKVY",
-    fullName: "Rashtriya Krishi Vikas Yojana",
-    category: "Development Grant",
-    status: "Active",
-    benefit: "Grants for agri development projects",
-    benefitDetail: "State-level agricultural development including infrastructure, R&D, and farmer training",
-    eligibility: ["Farmers registered under state agriculture department"],
-    exclusions: ["Varies by state"],
-    documents: ["Aadhaar Card", "Bank Account", "Land Records", "Application via state portals"],
-    deadline: "Varies by state scheme",
-    applyUrl: "https://rkvy.nic.in",
-    color: "indigo",
-    ministry: "Ministry of Agriculture & Farmers' Welfare"
-  },
-];
+const SCHEMES: any[] = [];
 
 const colorMap: Record<string, { badge: string; card: string; icon: string }> = {
   green: { badge: "bg-green-500/20 text-green-400 border-green-500/20", card: "border-green-500/20", icon: "bg-green-500/10" },
@@ -148,12 +21,26 @@ const colorMap: Record<string, { badge: string; card: string; icon: string }> = 
 
 const CATEGORIES = ["All", "Income Support", "Crop Insurance", "Agricultural Credit", "Organic Farming", "Pension Scheme", "Market Access", "Infrastructure Loan", "Development Grant"];
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+
 export default function Schemes() {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<string | null>(null);
   const [filter, setFilter] = useState("All");
 
-  const filtered = SCHEMES.filter(s => filter === "All" || s.category === filter);
-  const detail = selected ? SCHEMES.find(s => s.id === selected) : null;
+  const { data: schemes = [], isLoading } = useQuery({
+    queryKey: ["schemes", filter],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/schemes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: filter })
+      });
+      return res.json();
+    }
+  });
+
+  const detail = selected ? schemes.find((s: any) => s.id === selected) : null;
 
   return (
     <div className="container max-w-6xl space-y-6 py-6 md:py-10 animate-in fade-in duration-700">
@@ -180,8 +67,14 @@ export default function Schemes() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {filtered.map(scheme => {
-          const colors = colorMap[scheme.color];
+        {isLoading ? (
+          [1, 2, 3, 4].map(i => <div key={i} className="h-40 rounded-2xl bg-white/5 animate-pulse" />)
+        ) : schemes.length === 0 ? (
+          <Card className="col-span-full border-dashed border-white/10 bg-white/5 p-12 text-center rounded-2xl">
+               <p className="text-white/30 font-bold uppercase tracking-widest text-xs">No schemes found in this category</p>
+          </Card>
+        ) : schemes.map((scheme: any) => {
+          const colors = colorMap[scheme.color as keyof typeof colorMap] || colorMap.green;
           const isOpen = selected === scheme.id;
           return (
             <Card key={scheme.id} className={cn("border bg-black/40 backdrop-blur-xl rounded-2xl transition-all cursor-pointer hover:scale-[1.01]", colors.card, isOpen && "ring-1 ring-primary/30")}

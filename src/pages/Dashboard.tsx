@@ -22,40 +22,34 @@ const ALERTS_MOCK = [
   { type: "market", msg: "Tomato prices up 12% in Delhi mandis this week", severity: "info" },
 ];
 
-function CropMonitoringCard({ crop }: { crop: CropId }) {
-  const stage = CROP_STAGES[Math.floor(Math.random() * CROP_STAGES.length)];
-  const health = CROP_HEALTH[Math.floor(Math.random() * 2)]; // bias toward good
-  const daysToHarvest = Math.floor(Math.random() * 45) + 15;
-  const moisture = Math.floor(Math.random() * 30) + 50;
-  const temp = Math.floor(Math.random() * 10) + 22;
-
+function CropMonitoringCard({ data }: { data: any }) {
   return (
     <Card className="p-5 border-white/5 bg-white/[0.03] backdrop-blur-xl rounded-2xl space-y-4 hover:bg-white/[0.06] transition-all group">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Leaf className="h-4 w-4 text-green-400" />
-          <span className="text-white font-bold capitalize">{crop}</span>
+          <span className="text-white font-bold capitalize">{data.id}</span>
         </div>
         <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-full",
-          health === "Excellent" ? "bg-green-500/20 text-green-400" : "bg-amber-500/20 text-amber-400"
-        )}>{health}</span>
+          data.health === "Excellent" ? "bg-green-500/20 text-green-400" : "bg-amber-500/20 text-amber-400"
+        )}>{data.health}</span>
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div className="text-center">
           <p className="text-[9px] text-white/30 uppercase tracking-widest">Stage</p>
-          <p className="text-white text-xs font-bold mt-0.5">{stage}</p>
+          <p className="text-white text-xs font-bold mt-0.5">{data.stage}</p>
         </div>
         <div className="text-center">
           <p className="text-[9px] text-white/30 uppercase tracking-widest">Moisture</p>
-          <p className="text-sky-400 text-xs font-bold mt-0.5">{moisture}%</p>
+          <p className="text-sky-400 text-xs font-bold mt-0.5">{data.moisture}%</p>
         </div>
         <div className="text-center">
           <p className="text-[9px] text-white/30 uppercase tracking-widest">Harvest</p>
-          <p className="text-amber-400 text-xs font-bold mt-0.5">{daysToHarvest}d</p>
+          <p className="text-amber-400 text-xs font-bold mt-0.5">{data.daysToHarvest}d</p>
         </div>
       </div>
       <div className="flex items-center gap-2 text-[10px] text-white/30">
-        <Thermometer className="h-3 w-3" /> Avg. {temp}°C field temp
+        <Thermometer className="h-3 w-3" /> Avg. {data.temp}°C field temp
       </div>
     </Card>
   );
@@ -69,6 +63,14 @@ export default function Dashboard() {
   const [aiResp, setAiResp] = useState<string | null>(null);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+
+  const { data: monitoring = [] } = useQuery({
+    queryKey: ["crop-monitoring"],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/crop-monitoring`);
+      return res.json();
+    }
+  });
 
   const { data: series = [], isLoading } = useQuery({
     queryKey: ["priceSeries", crop, mandiId],
@@ -244,9 +246,11 @@ export default function Dashboard() {
           <Badge className="bg-green-500/10 text-green-400 border-green-500/20 text-[10px]">Live Tracking</Badge>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {(["wheat", "rice", "tomato", "onion"] as CropId[]).map(c => (
-            <CropMonitoringCard key={c} crop={c} />
-          ))}
+          {monitoring.length > 0 ? (
+            monitoring.map((m: any) => <CropMonitoringCard key={m.id} data={m} />)
+          ) : (
+            [1, 2, 3, 4].map(i => <div key={i} className="h-32 rounded-2xl bg-white/5 animate-pulse" />)
+          )}
         </div>
       </div>
 

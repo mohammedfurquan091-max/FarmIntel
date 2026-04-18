@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { CROPS, type CropId } from "@/services/marketData";
 
+import { useToast } from "@/hooks/use-toast";
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 // Crop-specific disease database for realistic demos
@@ -52,6 +54,7 @@ const severityConfig = {
 };
 
 export default function CropDoctor() {
+  const { toast } = useToast();
   const [crop, setCrop] = useState<CropId>("tomato");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageName, setImageName] = useState("");
@@ -73,12 +76,25 @@ export default function CropDoctor() {
     if (!imagePreview) return;
     setAnalyzing(true);
     setResult(null);
-    // Simulate API call + AI processing delay
-    await new Promise(r => setTimeout(r, 2500));
-    const diseases = DISEASE_DB[crop] || DISEASE_DB.tomato;
-    const pick = diseases[Math.floor(Math.random() * diseases.length)];
-    setResult(pick);
-    setAnalyzing(false);
+    try {
+      const res = await fetch(`${API_URL}/diagnose`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: imagePreview, crop }),
+      });
+      if (!res.ok) throw new Error("Diagnosis failed");
+      const data = await res.json();
+      setResult(data);
+    } catch (err: any) {
+      console.error(err);
+      toast({ 
+        title: "AI Analysis Failed", 
+        description: "Could not connect to the AI service. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const reset = () => { setImagePreview(null); setResult(null); setImageName(""); };

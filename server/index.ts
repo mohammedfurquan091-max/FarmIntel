@@ -1,11 +1,14 @@
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables IMMEDIATELY
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { generatePriceSeries, MANDIS, CROPS_META, GOV_SCHEMES, AGRI_INPUTS } from './mockData';
 import { predictNext7Days, getTrendStatus } from './ml';
-import { gemini } from './geminiRotator';   // ← single rotator instance for all AI
-
-dotenv.config({ path: '../.env' });
+import { gemini } from './geminiRotator';   // Now environment is loaded
 
 const app = express();
 app.use(cors());
@@ -111,15 +114,137 @@ app.post('/api/harvest-window', (req, res) => {
   res.json({ harvestStart: start.toISOString().slice(0,10), harvestEnd: end.toISOString().slice(0,10), currentReadinessPercent: readiness });
 });
 
-// ── 7. Government Schemes (no AI) ────────────────────────────────────────
+import { fetchAgriNews } from './services/news';
+
+// ── 7. Government Schemes ────────────────────────────────────────────────
 app.post('/api/schemes', (req, res) => {
-  const { landSizeAcres = 99, crops = [] } = req.body;
-  const eligible = GOV_SCHEMES.filter(s => {
-    const landOk = !(s.eligibility as any).maxLandAcres || landSizeAcres <= (s.eligibility as any).maxLandAcres;
-    const cropOk = !(s.eligibility as any).crops || crops.some((c: string) => (s.eligibility as any).crops.includes(c));
-    return landOk && cropOk;
-  });
+  const { category = "All" } = req.body;
+  const eligible = GOV_SCHEMES.filter(s => category === "All" || s.category === category);
   res.json(eligible);
+});
+
+// ── 8. news ─────────────────────────────────────────────────────────────
+app.get('/api/news', async (_req, res) => {
+  const news = await fetchAgriNews();
+  res.json(news);
+});
+
+// ── 9. Crop Doctor (Vision AI) ──────────────────────────────────────────
+app.post('/api/diagnose', async (req, res) => {
+  const { image, crop } = req.body; 
+  if (!image) return res.status(400).json({ error: 'Image is required' });
+
+  try {
+    const prompt = `Act as a senior plant pathologist. Analyze this leaf image of a ${crop} plant. 
+    Identify if there is any disease. If there is, return a valid JSON object starting with { and ending with } containing:
+    {
+      "name": "Common name of disease (Scientific name)",
+      "confidence": 0.95,
+      "severity": "low" | "medium" | "high",
+      "symptoms": "Brief bullet points of symptoms",
+      "organic": "Specific organic treatment",
+      "chemical": "Specific chemical treatment",
+      "prevention": "Specific prevention steps"
+    }
+    If it's healthy, return:
+    {
+      "name": "Healthy Plant",
+      "confidence": 0.99,
+      "severity": "low",
+      "symptoms": "No visible disease symptoms.",
+      "organic": "Continue normal nutrition",
+      "chemical": "None required",
+      "prevention": "Regular monitoring"
+    }
+    Return ONLY JSON.`;
+
+    const [mimeType, base64Data] = image.split(';base64,');
+    const type = mimeType.split(':')[1];
+
+    const result = await gemini.generateContent([
+      prompt,
+      {
+        inlineData: {
+          mimeType: type,
+          data: base64Data
+        }
+      }
+    ], "gemini-1.5-flash");
+
+    // Clean JSON from Markdown blocks if any
+    const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
+    res.json(JSON.parse(cleanJson));
+  } catch (err: any) {
+    console.error('Diagnosis error:', err);
+    res.status(500).json({ error: 'AI diagnosis failed: ' + err.message });
+  }
+});
+
+// ── 10. Crop Monitoring Board ──────────────────────────────────────────
+app.get('/api/crop-monitoring', (req, res) => {
+  const crops = ["wheat", "rice", "tomato", "onion"];
+  const stages = ["Seedling", "Vegetative", "Flowering", "Fruiting", "Maturity", "Harvest"];
+  
+  const results = crops.map(id => {
+    const meta = CROPS_META[id] || { maturityDays: 100 };
+    // Stable mock based on the day of the year
+    const dayOfYear = Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+    const stageIdx = Math.floor((dayOfYear % meta.maturityDays) / (meta.maturityDays / stages.length));
+    
+    return {
+      id,
+      stage: stages[stageIdx],
+      health: (dayOfYear + id.length) % 10 > 2 ? "Excellent" : "Good",
+      daysToHarvest: Math.max(0, meta.maturityDays - (dayOfYear % meta.maturityDays)),
+      moisture: 60 + (dayOfYear % 20),
+      temp: 24 + (dayOfYear % 8)
+    };
+  });
+  
+  res.json(results);
+});
+
+// ── 11. Market Board – All Mandis for a crop (ML – no AI) ─────────────────
+// Returns current ML-predicted price + 7-day trend for every mandi in the
+// frontend ALL_MANDIS list. The mandi IDs must match exactly.
+const ALL_MANDI_IDS = [
+  'ludhiana', 'amritsar', 'bathinda',
+  'azadpur', 'ghaziabad', 'kanpur',
+  'bowenpally', 'gudimalkapur', 'guntur', 'kurnool', 'warangal',
+  'pune-market', 'nashik', 'nagpur', 'solapur',
+  'jaipur', 'kota',
+  'bhopal', 'indore',
+  'bangalore', 'hubli',
+  'coimbatore', 'madurai',
+];
+
+app.get('/api/market-board', (req, res) => {
+  const crop = (req.query.crop as string) || 'tomato';
+
+  const results = ALL_MANDI_IDS.map(mandiId => {
+    // Generate 21 days of history then run linear regression for forecast
+    const { points } = generatePriceSeries(crop, mandiId, 21, 0);
+    const historical = points.filter((p: any) => !p.isForecast);
+    const predicted  = predictNext7Days(historical);
+    const trend      = getTrendStatus(historical, predicted);
+
+    // "Today's price" = last historical point (most recent)
+    const todayPrice = historical.length ? historical[historical.length - 1].price : 0;
+    // "7-day forecast" = last predicted point
+    const forecastPrice = predicted.length ? predicted[predicted.length - 1].price : todayPrice;
+    const pctChange = todayPrice > 0 ? ((forecastPrice - todayPrice) / todayPrice) * 100 : 0;
+
+    return {
+      id: mandiId,
+      price: todayPrice,
+      forecastPrice: +forecastPrice.toFixed(2),
+      pctChange: +pctChange.toFixed(1),
+      trend,                            // 'UP' | 'DOWN' | 'STABLE'
+      lastUpdated: new Date().toISOString().slice(0, 10),
+    };
+  });
+
+  res.json({ crop, mandis: results, generatedAt: new Date().toISOString() });
 });
 
 // ── 8. AI Key Status (diagnostic) ────────────────────────────────────────

@@ -66,10 +66,10 @@ class GeminiRotator {
 
   /**
    * Generate content with automatic key rotation on quota errors.
-   * @param parts  Array of prompt strings / parts (same as model.generateContent())
-   * @param model  Gemini model name (default: "gemini-flash-latest")
+   * @param parts  Array of prompt strings / objects (string | Part)
+   * @param model  Gemini model name (default: "gemini-1.5-flash")
    */
-  async generateContent(parts: string[], model = "gemini-flash-latest"): Promise<string> {
+  async generateContent(parts: any[], model = "gemini-1.5-flash"): Promise<string> {
     let lastError: unknown;
 
     // Try every available key, starting from current
